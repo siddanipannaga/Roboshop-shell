@@ -66,4 +66,7 @@ dnf install mysql -y &>> $LOGFILE
 VALIDATE $? " installing my sql "
 
 mysql -h mysql.allmydevops.online -uroot -pRoboShop@1 < /app/schema/shipping.sql &>> $LOGFILE
+VALIDATE $? " loading mysql data "
+
 systemctl restart shipping &>> $LOGFILE
+VALIDATE $? " restrating shipping "
