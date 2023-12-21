@@ -30,7 +30,7 @@ fi
 dnf module disable mysql -y &>> $LOGFILE
 VALIDATE $? " disable present mysql version "
 
-cp mysql.rep /etc/yum.repos.d/mysql.repo
+cp mysql.repo /etc/yum.repos.d/mysql.repo
 VALIDATE $? " copying Mysql repo "
 
 dnf install mysql-community-server -y &>> $LOGFILE
