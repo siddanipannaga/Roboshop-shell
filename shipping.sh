@@ -48,15 +48,15 @@ cd /app
 mvn clean package
 mv target/shipping-1.0.jar shipping.jar
 cp /home/centos/roboshop-shell/shipping.service /etc/systemd/system/shipping.service
-systemctl daemon-reload
+systemctl daemon-reload &>> $LOGFILE
 VALIDATE $? " reloading the daemon "
-systemctl enable shipping 
+systemctl enable shipping  &>> $LOGFILE
 VALIDATE $? " enabling the shipping "
-systemctl start shipping
+systemctl start shipping &>> $LOGFILE
 VALIDATE $? " starting shipping "
 
-dnf install mysql -y
+dnf install mysql -y &>> $LOGFILE
 VALIDATE $? " installing my sql "
 
-mysql -h mysql.allmydevops.online -uroot -pRoboShop@1 < /app/schema/shipping.sql 
-systemctl restart shipping
+mysql -h mysql.allmydevops.online -uroot -pRoboShop@1 < /app/schema/shipping.sql &>> $LOGFILE
+systemctl restart shipping &>> $LOGFILE
