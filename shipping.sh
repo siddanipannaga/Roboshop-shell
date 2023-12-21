@@ -41,13 +41,20 @@ mkdir -p /app
 VALIDATE $? " creating app directory " 
 
 curl -L -o /tmp/shipping.zip https://roboshop-builds.s3.amazonaws.com/shipping.zip
+VALIDATE $? "downloading shipping "
 cd /app
+VALIDATE $? " moving to app directory "
 unzip -o /tmp/shipping.zip
+VALIDATE $? " unzipping shipping "
 
 cd /app
+VALIDATE $? " moving to app directory "
 mvn clean package
+VALIDATE $? " installing dependencies "
 mv target/shipping-1.0.jar shipping.jar
+VALIDATE $? " renaming jar files "
 cp /home/centos/roboshop-shell/shipping.service /etc/systemd/system/shipping.service
+VALIDATE $? " copying shipping service "
 systemctl daemon-reload &>> $LOGFILE
 VALIDATE $? " reloading the daemon "
 systemctl enable shipping  &>> $LOGFILE
