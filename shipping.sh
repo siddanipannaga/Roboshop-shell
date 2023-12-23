@@ -47,8 +47,8 @@ VALIDATE $? " moving to app directory "
 unzip -o /tmp/shipping.zip
 VALIDATE $? " unzipping shipping "
 
-cd /app
-VALIDATE $? " moving to app directory "
+#cd /app
+#VALIDATE $? " moving to app directory "
 mvn clean package
 VALIDATE $? " installing dependencies "
 mv target/shipping-1.0.jar shipping.jar
