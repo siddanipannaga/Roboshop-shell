@@ -1,72 +1,69 @@
 #!/bin/bash
-
-ID=$(id -u)
-R="\e[31m"
-G="\e[32m"
-Y="\e[33m"
-N="\e[0m"
-
-TIMESTAMP=$(date +%F-%H-%M-%S)
-LOGFILE="/tmp/$0- $TIMESTAMP.log"
-echo " script started executing at $TIMESTAMP " &>> $LOGFILE
-VALIDATE (){
-   if [ $1 -ne 0 ]
-   then
-      echo -e "$2... $R failed $N " 
-      exit 1  
-   else
-      echo -e "$2...$G sucess $N "
-      fi
-}
-if [ $ID -ne 0 ]
-then
-   echo -e  "$R ERROR: Please run this script with root user $N"
-   exit 1 # 
-else
-   echo "You are a root user"
+set -e
+set -o pipefail
+​
+# Install Maven
+dnf install maven -y
+​
+# Add application user if it doesn't exist
+if ! id -u roboshop &> /dev/null; then
+    useradd roboshop
 fi
-
-dnf install maven -y 
-VALIDATE $? " Installing maven "
-
-if [ $? -ne 0 ]
-then
-   useradd roboshop
-   VALIDATE $? "ROBOSHOP USER CREATION"
-else
-   echo -e " roboshop user already exits $Y SKIPPING $N "
-fi      
-
-mkdir -p /app 
-VALIDATE $? " creating app directory " 
-
+​
+# Setup app directory if it doesn't exist
+if [ ! -d "/app" ]; then
+    mkdir /app
+fi
+​
+# Download application code
 curl -L -o /tmp/shipping.zip https://roboshop-builds.s3.amazonaws.com/shipping.zip
-VALIDATE $? "downloading shipping "
 cd /app
-VALIDATE $? " moving to app directory "
-unzip -o /tmp/shipping.zip
-VALIDATE $? " unzipping shipping "
-
-#cd /app
-#VALIDATE $? " moving to app directory "
+unzip /tmp/shipping.zip
+​
+# Build the application with Maven
+cd /app
 mvn clean package
-VALIDATE $? " installing dependencies "
 mv target/shipping-1.0.jar shipping.jar
-VALIDATE $? " renaming jar files "
-cp /home/centos/roboshop-shell/shipping.service /etc/systemd/system/shipping.service
-VALIDATE $? " copying shipping service "
-systemctl daemon-reload &>> $LOGFILE
-VALIDATE $? " reloading the daemon "
-systemctl enable shipping  &>> $LOGFILE
-VALIDATE $? " enabling the shipping "
-systemctl start shipping &>> $LOGFILE
-VALIDATE $? " starting shipping "
+​
+# Setup SystemD Shipping Service
+cat <<EOF > /etc/systemd/system/shipping.service
+[Unit]
+Description=Shipping Service
+​
+[Service]
+User=roboshop
+Environment=CART_ENDPOINT=cart.hiteshshop.online:8080
+Environment=DB_HOST=mysql.hiteshshop.online
+ExecStart=/usr/bin/java -jar /app/shipping.jar
+SyslogIdentifier=shipping
+​
+[Install]
+WantedBy=multi-user.target
+EOF
+​
+# Load the service
+systemctl daemon-reload
+​
+# Enable and start the service
+systemctl enable shipping
+systemctl start shipping
+​
+# Install MySQL client
+dnf install mysql -y
+​
+# Load Schema
+mysql -h mysql.hiteshshop.online -uroot -pRoboShop@1 < /app/schema/shipping.sql
+​
+# Restart the Shipping service after loading schema
+systemctl restart shipping
+Collapse
 
-dnf install mysql -y &>> $LOGFILE
-VALIDATE $? " installing my sql "
 
-mysql -h mysql.allmydevops.online -uroot -pRoboShop@1 < /app/schema/shipping.sql &>> $LOGFILE
-VALIDATE $? " loading mysql data "
 
-systemctl restart shipping &>> $LOGFILE
-VALIDATE $? " restrating shipping "
+
+
+
+
+
+
+
